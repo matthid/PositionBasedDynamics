@@ -791,6 +791,8 @@ void SceneLoader::readParameterObject(ParameterObject *paramObj)
 
 	const unsigned int numParams = paramObj->numParameters();
 
+	// TODO: Check why this method is required or just delete it
+	return;
 
 	//////////////////////////////////////////////////////////////////////////
 	// read configuration 

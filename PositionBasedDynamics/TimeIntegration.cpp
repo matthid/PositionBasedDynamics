@@ -56,12 +56,16 @@ void TimeIntegration::angularVelocityUpdateFirstOrder(
 	const Real mass,
 	const Quaternionr &rotation,
 	const Quaternionr &oldRotation,
-	Vector3r &angularVelocity)
+	Vector3r &angularVelocity,
+	bool checkPositive)
 {
 	if (mass != 0.0)
 	{
 		const Quaternionr relRot = (rotation * oldRotation.conjugate());
 		angularVelocity = relRot.vec() *(2.0 / h);
+		if (checkPositive && relRot.w() < 0) {
+			angularVelocity = -angularVelocity;
+		}
 	}
 }
 

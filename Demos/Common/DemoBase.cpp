@@ -396,8 +396,15 @@ void DemoBase::render()
 		}
 	}
 
+	DistanceFieldCollisionDetection* cd = nullptr;
+	Simulation* simulation = Simulation::getCurrent();
+	if (simulation) {
+		TimeStep* step = simulation->getTimeStep();
+		if (step) {
+			cd = (DistanceFieldCollisionDetection*)step->getCollisionDetection();
+		}
+	}
 
-	DistanceFieldCollisionDetection *cd = (DistanceFieldCollisionDetection*)Simulation::getCurrent()->getTimeStep()->getCollisionDetection();
 	if (cd && (m_renderSDF || m_renderAABB || (m_renderBVHDepth >= 0) || (m_renderBVHDepthTets >= 0)))
 	{
 		std::vector<CollisionDetection::CollisionObject*> &collisionObjects = cd->getCollisionObjects();

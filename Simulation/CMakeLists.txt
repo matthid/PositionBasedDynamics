@@ -30,6 +30,8 @@ add_library(Simulation
 		TimeStep.h
 		TimeStepController.cpp
 		TimeStepController.h
+		ExtendedTimeStepController.cpp
+		ExtendedTimeStepController.h
 		TriangleModel.cpp
 		TriangleModel.h
 		

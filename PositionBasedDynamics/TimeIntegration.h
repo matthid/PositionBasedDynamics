@@ -64,7 +64,8 @@ namespace PBD
 			const Real mass,
 			const Quaternionr &rotation,				// rotation after constraint projection	at time t+h
 			const Quaternionr &oldRotation,			// rotation before constraint projection at time t
-			Vector3r &angularVelocity);
+			Vector3r &angularVelocity,
+			bool checkPositive);
 
 
 		// -------------- velocity update (second order) -----------------------------------------------------

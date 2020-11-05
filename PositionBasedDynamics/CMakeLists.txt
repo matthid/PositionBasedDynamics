@@ -4,6 +4,8 @@ add_library(PositionBasedDynamics
 		DirectPositionBasedSolverForStiffRodsInterface.h
 		MathFunctions.cpp
 		MathFunctions.h
+		ExtendedPositionBasedDynamics.cpp
+		ExtendedPositionBasedDynamics.h
 		PositionBasedDynamics.cpp
 		PositionBasedDynamics.h
 		PositionBasedElasticRods.cpp

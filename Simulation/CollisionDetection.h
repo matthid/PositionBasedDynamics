@@ -86,6 +86,7 @@ namespace PBD
 
 		std::vector<CollisionObject*> &getCollisionObjects() { return m_collisionObjects; }
 
+		//TODO: add a 'Real safetyMulitplier' parameter?
 		virtual void collisionDetection(SimulationModel &model) = 0;
 
 		void setContactCallback(CollisionDetection::ContactCallbackFunction val, void *userData);

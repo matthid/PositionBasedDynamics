@@ -1,3 +1,8 @@
 lib/
 bin/
 !bin/*.bat
+.vs
+.ionide
+build/
+data/scenes/Cache
+Version.h

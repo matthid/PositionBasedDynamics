@@ -3,6 +3,7 @@
 #include "Utils/Timing.h"
 #include "TimeStep.h"
 #include "TimeStepController.h"
+#include "ExtendedTimeStepController.h"
 
 using namespace PBD;
 using namespace std;
@@ -109,7 +110,9 @@ void Simulation::setSimulationMethod(const int val)
 	}
 	else if (method == SimulationMethods::XPBD)
 	{
-		LOG_INFO << "XPBD not implemented yet.";
+		m_timeStep = new ExtendedTimeStepController();
+		m_timeStep->init();
+		TimeManager::getCurrent()->setTimeStepSize(static_cast<Real>(0.005));
 	}
 	else if (method == SimulationMethods::IBDS)
 	{

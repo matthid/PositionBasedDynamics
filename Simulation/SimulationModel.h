@@ -104,6 +104,10 @@ namespace PBD
 			RigidBodyContactConstraintVector &getRigidBodyContactConstraints();
 			ParticleRigidBodyContactConstraintVector &getParticleRigidBodyContactConstraints();
 			ParticleSolidContactConstraintVector &getParticleSolidContactConstraints();
+			/**
+			* Constraint Groups collects contraints which need to be solved together
+			* This allows parallel processing of the different groups.
+			*/
 			ConstraintGroupVector &getConstraintGroups();
 			bool m_groupsInitialized;
 

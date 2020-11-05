@@ -1,6 +1,7 @@
 #include "Constraints.h"
 #include "SimulationModel.h"
 #include "PositionBasedDynamics/PositionBasedDynamics.h"
+#include "PositionBasedDynamics/ExtendedPositionBasedDynamics.h"
 #include "PositionBasedDynamics/PositionBasedRigidBodyDynamics.h"
 #include "TimeManager.h"
 #include "Simulation/IDFactory.h"
@@ -119,6 +120,30 @@ bool BallJoint::solvePositionConstraint(SimulationModel &model, const unsigned i
 	return res;
 }
 
+bool PBD::BallJoint::extendedPBDRigidBodyUpdate(SimulationModel& model, const Real iter)
+{
+	// jointInfo contains
+	// 0:	connector in body 0 (local)
+	// 1:	connector in body 1 (local)
+	// 2:	connector in body 0 (global)
+	// 3:	connector in body 1 (global)
+
+	SimulationModel::RigidBodyVector& rb = model.getRigidBodies();
+
+	RigidBody& rb0 = *rb[m_bodies[0]];
+	RigidBody& rb1 = *rb[m_bodies[1]];
+
+	// Update Position
+	// Perf (inline the required calcs)
+	//updateConstraint(model);
+	//Vector3r con0 = m_jointInfo.block<3, 1>(0, 2);
+	//Vector3r con1 = m_jointInfo.block<3, 1>(0, 3);
+	//Vector3r diff = con1 - con0;
+	//ExtendedPositionBasedDynamics::applyBodyPairCorrection(rb0, rb1, diff, 0, iter, &con0, &con1);
+	
+	return true;
+}
+
 
 //////////////////////////////////////////////////////////////////////////
 // BallOnLineJoint
@@ -196,6 +221,32 @@ bool BallOnLineJoint::solvePositionConstraint(SimulationModel &model, const unsi
 	return res;
 }
 
+bool PBD::BallOnLineJoint::extendedPBDRigidBodyUpdate(SimulationModel& model, const Real iter)
+{
+	// jointInfo contains
+	// 0:	connector in body 0 (local)
+	// 1:	connector in body 1 (local)
+	// 2-4:	coordinate system of body 0 (local)
+	// 5:	connector in body 0 (global)
+	// 6:	connector in body 1 (global)
+	// 7-9:	coordinate system of body 0 (global)
+
+	SimulationModel::RigidBodyVector& rb = model.getRigidBodies();
+
+	RigidBody& rb0 = *rb[m_bodies[0]];
+	RigidBody& rb1 = *rb[m_bodies[1]];
+
+	// Update Position
+	// Perf (inline the required calcs)
+	//updateConstraint(model);
+	//Vector3r con0 = m_jointInfo.block<3, 1>(0, 5);
+	//Vector3r con1 = m_jointInfo.block<3, 1>(0, 6);
+	//Vector3r diff = con1 - con0;
+	//ExtendedPositionBasedDynamics::applyBodyPairCorrection(rb0, rb1, diff, 0, iter, &con0, &con1);
+
+	return true;
+}
+
 
 //////////////////////////////////////////////////////////////////////////
 // HingeJoint
@@ -271,6 +322,78 @@ bool HingeJoint::solvePositionConstraint(SimulationModel &model, const unsigned 
 		}
 	}
 	return res;
+}
+
+bool PBD::HingeJoint::extendedPBDRigidBodyUpdate(SimulationModel& model, const Real iter)
+{
+	// jointInfo contains
+	// 0-1:	projection matrix Pr for the rotational part
+	// 2:	connector in body 0 (local)
+	// 3:	connector in body 1 (local)
+	// 4:	connector in body 0 (global)
+	// 5:	connector in body 1 (global)
+	// 6:	hinge axis in body 0 (local) used for rendering 
+
+	SimulationModel::RigidBodyVector& rb = model.getRigidBodies();
+
+	RigidBody& rb0 = *rb[m_bodies[0]];
+	RigidBody& rb1 = *rb[m_bodies[1]];
+
+	Vector3r impulse0, impulse1, scale0, scale1, scale0_g, scale1_g;
+	Matrix3r rot0, rot1;
+	Real lagrage = 0;
+	
+	// Update Angular
+	// Perf (lots of the matrix is not required)
+	Matrix3r rot_0 = rb0.getRotation().matrix();
+	Matrix3r rot_1 = rb1.getRotation().matrix();
+	Vector3r corr = rot_0.row(0).cross(rot_1.row(0));
+
+	ExtendedPositionBasedDynamics::applyBodyPairCorrection(rb0, rb1, corr, 0, iter);
+
+	// Update Position
+	// Perf (inline the required calcs)
+	updateConstraint(model);
+	Vector3r con0 = m_jointInfo.block<3, 1>(0, 4);
+	Vector3r con1 = m_jointInfo.block<3, 1>(0, 5);
+	Vector3r diff = con1 - con0;
+	ExtendedPositionBasedDynamics::applyBodyPairCorrection(rb0, rb1, diff, 0, iter, &con0, &con1);
+
+	//lagrage = 0;
+	//
+	//updateConstraint(model);
+	//Vector3r con0 = m_jointInfo.block<3, 1>(0, 4);
+	//Vector3r con1 = m_jointInfo.block<3, 1>(0, 5);
+	//Vector3r diff = con0 - con1;
+	//Vector3r impulse;
+	//if (ExtendedPositionBasedDynamics::calc_lagrange_PositionalConstraint(
+	//	diff,
+	//	rb0.getPosition(), rb0.getInvMass(), rb0.getInertiaTensorInverse(), rb0.getRotation().inverse(),
+	//	rb1.getPosition(), rb1.getInvMass(), rb1.getInertiaTensorInverse(), rb1.getRotation().inverse(),
+	//	0, iter, lagrage, impulse, impulse0, impulse1)) {
+	//
+	//	ExtendedPositionBasedDynamics::scale_rotation_update(
+	//		rb0.getInertiaTensorInverse(),
+	//		rb1.getInertiaTensorInverse(),
+	//		rb0.getPosition().cross(impulse0), rb1.getPosition().cross(impulse1), scale0, scale1);
+	//
+	//	ExtendedPositionBasedDynamics::update_positions(
+	//		rb0.getPosition(), rb0.getInvMass(),
+	//		rb1.getPosition(), rb1.getInvMass(),
+	//		impulse);
+	//
+	//	// transform to global
+	//	rot0 = rb0.getRotation().matrix();
+	//	rot1 = rb1.getRotation().matrix();
+	//	scale0_g = rot0 * scale0; //+ rb0.getPosition();
+	//	scale1_g = rot1 * scale1; //+ rb1.getPosition();
+	//	ExtendedPositionBasedDynamics::update_velocities(
+	//		rb0.getRotation(), rb1.getRotation(), scale0_g, scale1_g);
+	//
+	//}
+
+
+	return true;
 }
 
 
@@ -352,6 +475,11 @@ bool UniversalJoint::solvePositionConstraint(SimulationModel &model, const unsig
 	return res;
 }
 
+bool PBD::UniversalJoint::extendedPBDRigidBodyUpdate(SimulationModel& model, const Real iter)
+{
+	return false;
+}
+
 
 //////////////////////////////////////////////////////////////////////////
 // SliderJoint
@@ -427,6 +555,11 @@ bool SliderJoint::solvePositionConstraint(SimulationModel &model, const unsigned
 		}
 	}
 	return res;
+}
+
+bool PBD::SliderJoint::extendedPBDRigidBodyUpdate(SimulationModel& model, const Real iter)
+{
+	return false;
 }
 
 
@@ -505,6 +638,11 @@ bool TargetPositionMotorSliderJoint::solvePositionConstraint(SimulationModel &mo
 		}
 	}
 	return res;
+}
+
+bool PBD::TargetPositionMotorSliderJoint::extendedPBDRigidBodyUpdate(SimulationModel& model, const Real iter)
+{
+	return false;
 }
 
 
@@ -631,6 +769,11 @@ bool TargetVelocityMotorSliderJoint::solveVelocityConstraint(SimulationModel &mo
 	return res;
 }
 
+bool PBD::TargetVelocityMotorSliderJoint::extendedPBDRigidBodyUpdate(SimulationModel& model, const Real iter)
+{
+	return false;
+}
+
 //////////////////////////////////////////////////////////////////////////
 // TargetAngleMotorHingeJoint
 //////////////////////////////////////////////////////////////////////////
@@ -706,6 +849,11 @@ bool TargetAngleMotorHingeJoint::solvePositionConstraint(SimulationModel &model,
 		}
 	}
 	return res;
+}
+
+bool PBD::TargetAngleMotorHingeJoint::extendedPBDRigidBodyUpdate(SimulationModel& model, const Real iter)
+{
+	return false;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -827,6 +975,11 @@ bool TargetVelocityMotorHingeJoint::solveVelocityConstraint(SimulationModel &mod
 	return res;
 }
 
+bool PBD::TargetVelocityMotorHingeJoint::extendedPBDRigidBodyUpdate(SimulationModel& model, const Real iter)
+{
+	return false;
+}
+
 
 //////////////////////////////////////////////////////////////////////////
 // DamperJoint
@@ -914,6 +1067,11 @@ bool DamperJoint::solvePositionConstraint(SimulationModel &model, const unsigned
 	return res;
 }
 
+bool PBD::DamperJoint::extendedPBDRigidBodyUpdate(SimulationModel& model, const Real iter)
+{
+	return false;
+}
+
 //////////////////////////////////////////////////////////////////////////
 // RigidBodyParticleBallJoint
 //////////////////////////////////////////////////////////////////////////
@@ -979,6 +1137,11 @@ bool RigidBodyParticleBallJoint::solvePositionConstraint(SimulationModel &model,
 		}
 	}
 	return res;
+}
+
+bool PBD::RigidBodyParticleBallJoint::extendedPBDRigidBodyUpdate(SimulationModel& model, const Real iter)
+{
+	return false;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -1070,6 +1233,11 @@ bool RigidBodySpring::solvePositionConstraint(SimulationModel &model, const unsi
 	return res;
 }
 
+bool PBD::RigidBodySpring::extendedPBDRigidBodyUpdate(SimulationModel& model, const Real iter)
+{
+	return false;
+}
+
 
 //////////////////////////////////////////////////////////////////////////
 // DistanceJoint
@@ -1155,6 +1323,11 @@ bool DistanceJoint::solvePositionConstraint(SimulationModel &model, const unsign
 	return res;
 }
 
+bool PBD::DistanceJoint::extendedPBDRigidBodyUpdate(SimulationModel& model, const Real iter)
+{
+	return false;
+}
+
 //////////////////////////////////////////////////////////////////////////
 // DistanceConstraint
 //////////////////////////////////////////////////////////////////////////
@@ -1197,6 +1370,11 @@ bool DistanceConstraint::solvePositionConstraint(SimulationModel &model, const u
 			x2 += corr2;
 	}
 	return res;
+}
+
+bool PBD::DistanceConstraint::extendedPBDRigidBodyUpdate(SimulationModel& model, const Real iter)
+{
+	return false;
 }
 
 
@@ -1280,6 +1458,11 @@ bool DihedralConstraint::solvePositionConstraint(SimulationModel &model, const u
 	return res;
 }
 
+bool PBD::DihedralConstraint::extendedPBDRigidBodyUpdate(SimulationModel& model, const Real iter)
+{
+	return false;
+}
+
 
 //////////////////////////////////////////////////////////////////////////
 // IsometricBendingConstraint
@@ -1342,6 +1525,11 @@ bool IsometricBendingConstraint::solvePositionConstraint(SimulationModel &model,
 	return res;
 }
 
+bool PBD::IsometricBendingConstraint::extendedPBDRigidBodyUpdate(SimulationModel& model, const Real iter)
+{
+	return false;
+}
+
 //////////////////////////////////////////////////////////////////////////
 // FEMTriangleConstraint
 //////////////////////////////////////////////////////////////////////////
@@ -1401,6 +1589,11 @@ bool FEMTriangleConstraint::solvePositionConstraint(SimulationModel &model, cons
 			x3 += corr3;
 	}
 	return res;
+}
+
+bool PBD::FEMTriangleConstraint::extendedPBDRigidBodyUpdate(SimulationModel& model, const Real iter)
+{
+	return false;
 }
 
 
@@ -1469,6 +1662,11 @@ bool StrainTriangleConstraint::solvePositionConstraint(SimulationModel &model, c
 	return res;
 }
 
+bool PBD::StrainTriangleConstraint::extendedPBDRigidBodyUpdate(SimulationModel& model, const Real iter)
+{
+	return false;
+}
+
 
 //////////////////////////////////////////////////////////////////////////
 // VolumeConstraint
@@ -1534,6 +1732,11 @@ bool VolumeConstraint::solvePositionConstraint(SimulationModel &model, const uns
 			x4 += corr4;
 	}
 	return res;
+}
+
+bool PBD::VolumeConstraint::extendedPBDRigidBodyUpdate(SimulationModel& model, const Real iter)
+{
+	return false;
 }
 
 
@@ -1609,6 +1812,11 @@ bool FEMTetConstraint::solvePositionConstraint(SimulationModel &model, const uns
 	return res;
 }
 
+bool PBD::FEMTetConstraint::extendedPBDRigidBodyUpdate(SimulationModel& model, const Real iter)
+{
+	return false;
+}
+
 
 //////////////////////////////////////////////////////////////////////////
 // StrainTetConstraint
@@ -1680,6 +1888,11 @@ bool StrainTetConstraint::solvePositionConstraint(SimulationModel &model, const 
 	return res;
 }
 
+bool PBD::StrainTetConstraint::extendedPBDRigidBodyUpdate(SimulationModel& model, const Real iter)
+{
+	return false;
+}
+
 //////////////////////////////////////////////////////////////////////////
 // ShapeMatchingConstraint
 //////////////////////////////////////////////////////////////////////////
@@ -1724,6 +1937,11 @@ bool ShapeMatchingConstraint::solvePositionConstraint(SimulationModel &model, co
 		}
 	}
 	return res;
+}
+
+bool PBD::ShapeMatchingConstraint::extendedPBDRigidBodyUpdate(SimulationModel& model, const Real iter)
+{
+	return false;
 }
 
 
@@ -1808,6 +2026,11 @@ bool RigidBodyContactConstraint::solveVelocityConstraint(SimulationModel &model,
 	return res;
 }
 
+bool PBD::RigidBodyContactConstraint::extendedPBDRigidBodyUpdate(SimulationModel& model, const Real iter)
+{
+	return false;
+}
+
 //////////////////////////////////////////////////////////////////////////
 // ParticleRigidBodyContactConstraint
 //////////////////////////////////////////////////////////////////////////
@@ -1882,6 +2105,11 @@ bool ParticleRigidBodyContactConstraint::solveVelocityConstraint(SimulationModel
 		}	
 	}
 	return res;
+}
+
+bool PBD::ParticleRigidBodyContactConstraint::extendedPBDRigidBodyUpdate(SimulationModel& model, const Real iter)
+{
+	return false;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -2023,6 +2251,11 @@ bool ParticleTetContactConstraint::solveVelocityConstraint(SimulationModel &mode
 	return res;
 }
 
+bool PBD::ParticleTetContactConstraint::extendedPBDRigidBodyUpdate(SimulationModel& model, const Real iter)
+{
+	return false;
+}
+
 //////////////////////////////////////////////////////////////////////////
 // StretchShearConstraint
 //////////////////////////////////////////////////////////////////////////
@@ -2080,6 +2313,11 @@ bool StretchShearConstraint::solvePositionConstraint(SimulationModel &model, con
 		}
 	}
 	return res;
+}
+
+bool PBD::StretchShearConstraint::extendedPBDRigidBodyUpdate(SimulationModel& model, const Real iter)
+{
+	return false;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -2140,6 +2378,11 @@ bool BendTwistConstraint::solvePositionConstraint(SimulationModel &model, const 
 		}
 	}
 	return res;
+}
+
+bool PBD::BendTwistConstraint::extendedPBDRigidBodyUpdate(SimulationModel& model, const Real iter)
+{
+	return false;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -2254,6 +2497,11 @@ bool StretchBendingTwistingConstraint::solvePositionConstraint(SimulationModel &
 		}
 	}
 	return res;
+}
+
+bool PBD::StretchBendingTwistingConstraint::extendedPBDRigidBodyUpdate(SimulationModel& model, const Real iter)
+{
+	return false;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -2409,6 +2657,11 @@ bool PBD::DirectPositionBasedSolverForStiffRodsConstraint::solvePositionConstrai
 	}
 
 	return res;
+}
+
+bool PBD::DirectPositionBasedSolverForStiffRodsConstraint::extendedPBDRigidBodyUpdate(SimulationModel& model, const Real iter)
+{
+	return false;
 }
 
 bool PBD::DirectPositionBasedSolverForStiffRodsConstraint::RodSegmentImpl::isDynamic()
