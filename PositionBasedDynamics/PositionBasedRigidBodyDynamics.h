@@ -236,7 +236,7 @@ namespace PBD
 			const Quaternionr &q1,					// rotation of body 1
 			const Vector3r &hingeJointPosition,		// position of hinge joint
 			const Vector3r &hingeJointAxis,			// axis of hinge joint
-			Eigen::Matrix<Real, 4, 7, Eigen::DontAlign> &hingeJointInfo
+			Eigen::Matrix<Real, 4, 8, Eigen::DontAlign> &hingeJointInfo
 			);
 
 		/** Update hinge joint info which is required by the solver step.
@@ -255,7 +255,7 @@ namespace PBD
 			const Quaternionr &q0,					// rotation of body 0	
 			const Vector3r &x1,						// center of mass of body 1
 			const Quaternionr &q1,					// rotation of body 1
-			Eigen::Matrix<Real, 4, 7, Eigen::DontAlign> &hingeJointInfo
+			Eigen::Matrix<Real, 4, 8, Eigen::DontAlign> &hingeJointInfo
 			);
 
 		/** Perform a solver step for a hinge joint which links two rigid bodies.
@@ -293,7 +293,7 @@ namespace PBD
 			const Vector3r &x1, 						// center of mass of body 1
 			const Matrix3r &inertiaInverseW1,		// inverse inertia tensor (world space) of body 1
 			const Quaternionr &q1,					// rotation of body 1
-			const Eigen::Matrix<Real, 4, 7, Eigen::DontAlign> &hingeJointInfo,	// precomputed hinge joint info
+			const Eigen::Matrix<Real, 4, 8, Eigen::DontAlign> &hingeJointInfo,	// precomputed hinge joint info
 			Vector3r &corr_x0, Quaternionr &corr_q0,
 			Vector3r &corr_x1, Quaternionr &corr_q1);
 

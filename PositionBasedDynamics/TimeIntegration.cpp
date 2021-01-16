@@ -62,7 +62,7 @@ void TimeIntegration::angularVelocityUpdateFirstOrder(
 	if (mass != 0.0)
 	{
 		const Quaternionr relRot = (rotation * oldRotation.conjugate());
-		angularVelocity = relRot.vec() *(2.0 / h);
+		angularVelocity = relRot.vec() * (2.0 / h);
 		if (checkPositive && relRot.w() < 0) {
 			angularVelocity = -angularVelocity;
 		}

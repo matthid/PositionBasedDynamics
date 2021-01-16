@@ -141,10 +141,14 @@ namespace Utilities
 
 		~LogStream() { m_logger->write(m_level, m_buffer.str()); }
 
+
+		
+
 	protected:
 		LogLevel m_level;
 		Logger *m_logger;
 		std::ostringstream m_buffer;
+
 	};
 
 	extern Utilities::Logger logger;
@@ -156,5 +160,8 @@ namespace Utilities
 	#define INIT_LOGGING Utilities::Logger Utilities::logger;
 }
 
+#include "Common/Common.h"
+std::ostream& operator<<(std::ostream& os, const Quaternionr& q);
+std::ostream& operator<<(std::ostream& os, const Vector3r& v);
 
 #endif

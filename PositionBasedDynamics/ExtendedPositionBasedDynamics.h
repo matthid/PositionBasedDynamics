@@ -99,7 +99,7 @@ namespace PBD
 		static const Real maxRotationPerSubstep;
 
 		template <class TBody>
-		static void applyRotation(TBody& body, const Vector3r& rot, Real scale = 1) {
+		static void applyRotation(TBody& body, const Vector3r& rot, Real scale = 1.0) {
 			Real maxPhi = 0.5;
 			Real phi = rot.norm();
 			if (phi * scale > maxRotationPerSubstep) {
@@ -135,15 +135,17 @@ namespace PBD
 				dq = diff.cross(corr);
 			}
 
-			Quaternionr* rot = getBodyRot(body);
-			dq = rot->conjugate() * dq;
-			Vector3r invInertia = *getBodyInertiaInv(body);
-			dq = *rot * Vector3r(invInertia.x() * dq.x(), invInertia.y() * dq.y(), invInertia.z() * dq.z());
-			if (velocityLevel) {
-				getBodyAccel(body) += dq;
-			}
-			else {
-				applyRotation(body, dq);
+			Quaternionr* rot = getBodyRot(body); 
+			if (rot != nullptr) {
+				dq = rot->conjugate() * dq;
+				Vector3r invInertia = *getBodyInertiaInv(body);
+				dq = *rot * Vector3r(invInertia.x() * dq.x(), invInertia.y() * dq.y(), invInertia.z() * dq.z());
+				if (velocityLevel) {
+					getBodyAccel(body) += dq;
+				}
+				else {
+					applyRotation(body, dq);
+				}
 			}
 		}
 
@@ -157,8 +159,8 @@ namespace PBD
 				return;
 			}
 
-			Vector3r normal = corr;
-			normal.normalize();
+			Vector3r normal = corr.stableNormalized();
+			//normal.normalize();
 			Real w0 = getInverseMass(body0, normal, pos0);
 			Real w1 = getInverseMass(body1, normal, pos1);
 			Real w = w0 + w1;

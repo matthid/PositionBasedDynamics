@@ -16,6 +16,7 @@ add_library(Simulation
 		NeighborhoodSearchSpatialHashing.h
 		ParticleData.h
 		RigidBody.h
+		RigidBody.cpp
 		RigidBodyGeometry.cpp
 		RigidBodyGeometry.h
 		Simulation.cpp

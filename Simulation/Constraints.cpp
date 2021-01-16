@@ -135,12 +135,22 @@ bool PBD::BallJoint::extendedPBDRigidBodyUpdate(SimulationModel& model, const Re
 
 	// Update Position
 	// Perf (inline the required calcs)
-	//updateConstraint(model);
-	//Vector3r con0 = m_jointInfo.block<3, 1>(0, 2);
-	//Vector3r con1 = m_jointInfo.block<3, 1>(0, 3);
-	//Vector3r diff = con1 - con0;
-	//ExtendedPositionBasedDynamics::applyBodyPairCorrection(rb0, rb1, diff, 0, iter, &con0, &con1);
-	
+	updateConstraint(model);
+	Vector3r con0 = m_jointInfo.block<3, 1>(0, 2);
+	Vector3r con1 = m_jointInfo.block<3, 1>(0, 3);
+	Vector3r diff = con1 - con0;
+
+	LOG_CALC(LOG_INFO << "BallJoint for '" << rb0.getName() << "' and '" << rb1.getName() << "'."
+		<< "\n\tcon0: " << con0 << ", con1: " << con1 << ", corr: " << diff
+	);
+
+	ExtendedPositionBasedDynamics::applyBodyPairCorrection(rb0, rb1, diff, 0, iter, &con0, &con1);
+
+	LOG_CALC(LOG_INFO
+		<< "\n\tnew_pos_0: " << rb0.getPosition() << ", new_vel_0: " << rb0.getVelocity() << ", new_rot_0: " << rb0.getRotation()
+		<< "\n\tnew_pos_1: " << rb1.getPosition() << ", new_vel_1: " << rb1.getVelocity() << ", new_rot_1: " << rb1.getRotation()
+	);
+
 	return true;
 }
 
@@ -255,6 +265,7 @@ bool HingeJoint::initConstraint(SimulationModel &model, const unsigned int rbInd
 {
 	m_bodies[0] = rbIndex1;
 	m_bodies[1] = rbIndex2;
+	m_axis = axis;
 	SimulationModel::RigidBodyVector &rb = model.getRigidBodies();
 	RigidBody &rb1 = *rb[m_bodies[0]];
 	RigidBody &rb2 = *rb[m_bodies[1]];
@@ -332,7 +343,8 @@ bool PBD::HingeJoint::extendedPBDRigidBodyUpdate(SimulationModel& model, const R
 	// 3:	connector in body 1 (local)
 	// 4:	connector in body 0 (global)
 	// 5:	connector in body 1 (global)
-	// 6:	hinge axis in body 0 (local) used for rendering 
+	// 6:	hinge axis in body 0 (local)
+	// 7:	hinge axis in body 1 (local)
 
 	SimulationModel::RigidBodyVector& rb = model.getRigidBodies();
 
@@ -345,11 +357,21 @@ bool PBD::HingeJoint::extendedPBDRigidBodyUpdate(SimulationModel& model, const R
 	
 	// Update Angular
 	// Perf (lots of the matrix is not required)
-	Matrix3r rot_0 = rb0.getRotation().matrix();
-	Matrix3r rot_1 = rb1.getRotation().matrix();
-	Vector3r corr = rot_0.row(0).cross(rot_1.row(0));
+	Vector3r axis_0 = rb0.getRotation() * m_jointInfo.block<3, 1>(0, 6);
+	Vector3r axis_1 = rb1.getRotation() * m_jointInfo.block<3, 1>(0, 7);
+	//Vector3r rot_0 = axis_0.transpose() * rb0.getRotation().matrix();
+	//Vector3r rot_1 = axis_1.transpose() * rb1.getRotation().matrix();
+	//Vector3r rot_0 = rb0.getRotation() * m_jointInfo.block<3, 1>(0, 6);
+	//Vector3r rot_1 = rb1.getRotation() * m_jointInfo.block<3, 1>(0, 7);
+	Vector3r axis = axis_0.cross(axis_1);
+	Real angle = acos(axis_0.dot(axis_1) / axis_0.norm() / axis_1.norm());
+	//Vector3r corr = rot_0.cross(rot_1);
 
-	ExtendedPositionBasedDynamics::applyBodyPairCorrection(rb0, rb1, corr, 0, iter);
+	LOG_CALC(LOG_INFO << "HingeJoint for '" << rb0.getName() << "' and '" << rb1.getName() << "'."
+		<< "\n\taxis0: " << axis_0 << ", axis1: " << axis_1
+		<< "\n\tcross: " << axis << ", angle: " << angle);
+	ExtendedPositionBasedDynamics::applyBodyPairCorrection(rb0, rb1, axis * angle, 0, iter);
+
 
 	// Update Position
 	// Perf (inline the required calcs)
@@ -357,8 +379,14 @@ bool PBD::HingeJoint::extendedPBDRigidBodyUpdate(SimulationModel& model, const R
 	Vector3r con0 = m_jointInfo.block<3, 1>(0, 4);
 	Vector3r con1 = m_jointInfo.block<3, 1>(0, 5);
 	Vector3r diff = con1 - con0;
+	LOG_CALC(LOG_INFO
+		<< "\n\tcon0: " << con0 << ", con1: " << con1 << ", corr: " << diff);
 	ExtendedPositionBasedDynamics::applyBodyPairCorrection(rb0, rb1, diff, 0, iter, &con0, &con1);
 
+	LOG_CALC(LOG_INFO
+		<< "\n\tnew_pos_0: " << rb0.getPosition() << ", new_vel_0: " << rb0.getVelocity() << ", new_rot_0: " << rb0.getRotation()
+		<< "\n\tnew_pos_1: " << rb1.getPosition() << ", new_vel_1: " << rb1.getVelocity() << ", new_rot_1: " << rb1.getRotation()
+		);
 	//lagrage = 0;
 	//
 	//updateConstraint(model);

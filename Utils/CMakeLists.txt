@@ -14,6 +14,7 @@ add_library(Utils
 		IndexedTetMesh.cpp
 		IndexedTetMesh.h
 		Logger.h
+		Logger.cpp
 		OBJLoader.h
 		SceneLoader.cpp
 		SceneLoader.h

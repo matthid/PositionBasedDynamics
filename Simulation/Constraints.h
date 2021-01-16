@@ -78,7 +78,8 @@ namespace PBD
 	{
 	public:
 		static int TYPE_ID;
-		Eigen::Matrix<Real, 4, 7, Eigen::DontAlign> m_jointInfo;
+		Eigen::Matrix<Real, 4, 8, Eigen::DontAlign> m_jointInfo;
+		Vector3r m_axis;
 
 		HingeJoint() : Constraint(2) {}
 		virtual int &getTypeId() const { return TYPE_ID; }

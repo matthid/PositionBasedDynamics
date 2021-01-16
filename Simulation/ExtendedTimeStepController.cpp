@@ -97,8 +97,9 @@ void ExtendedTimeStepController::step(SimulationModel& model)
 
 	const int numBodies = (int)rb.size();
 
-	for (int i = 0; i < m_numSubsteps; i++)
+	for (int s = 0; s < m_numSubsteps; s++)
 	{
+		LOG_CALC(LOG_INFO << "Simuation Step (Substep: " << s << "): " << timestep << ", devided in " << h);
 #pragma omp parallel if(numBodies > MIN_PARALLEL_SIZE) default(shared)
 		{
 			//////////////////////////////////////////////////////////////////////////
@@ -113,6 +114,7 @@ void ExtendedTimeStepController::step(SimulationModel& model)
 				// v <- v + h*f_ext/m
 				// x <- x + hv
 				TimeIntegration::semiImplicitEuler(h, rb[i]->getMass(), rb[i]->getPosition(), rb[i]->getVelocity(), rb[i]->getAcceleration());
+				
 				// q_prev = q
 				rb[i]->getLastRotation() = rb[i]->getOldRotation();
 				rb[i]->getOldRotation() = rb[i]->getRotation();
@@ -120,7 +122,12 @@ void ExtendedTimeStepController::step(SimulationModel& model)
 				// q <- q + h * 0.5 * [w_x, w_y, w_z, 0] * q
 				// normalize: q <- q / |q|
 				TimeIntegration::semiImplicitEulerRotation(h, rb[i]->getMass(), rb[i]->getInertiaTensorInverseW(), rb[i]->getRotation(), rb[i]->getAngularVelocity(), rb[i]->getTorque());
-				rb[i]->rotationUpdated();
+				//rb[i]->rotationUpdated();
+
+				LOG_CALC(LOG_INFO << "Updated body: " << rb[i]->getName()
+					<< "\n\tx_prev: " << rb[i]->getOldPosition() << ", x: " << rb[i]->getPosition() 
+					<< "\n\tv: " << rb[i]->getVelocity() << ", w: " << rb[i]->getAngularVelocity()
+					<< "\n\tq_prev: " << rb[i]->getOldRotation() << ", q: " << rb[i]->getRotation());
 			}
 
 			//////////////////////////////////////////////////////////////////////////
@@ -167,9 +174,13 @@ void ExtendedTimeStepController::step(SimulationModel& model)
 					TimeIntegration::velocityUpdateSecondOrder(h, rb[i]->getMass(), rb[i]->getPosition(), rb[i]->getOldPosition(), rb[i]->getLastPosition(), rb[i]->getVelocity());
 					TimeIntegration::angularVelocityUpdateSecondOrder(h, rb[i]->getMass(), rb[i]->getRotation(), rb[i]->getOldRotation(), rb[i]->getLastRotation(), rb[i]->getAngularVelocity());
 				}
-				// update geometry
-				if (rb[i]->getMass() != 0.0)
-					rb[i]->getGeometry().updateMeshTransformation(rb[i]->getPosition(), rb[i]->getRotationMatrix());
+
+
+				LOG_CALC(LOG_INFO << "Updated body after positional solve: " << rb[i]->getName()
+					<< "\n\tv: " << rb[i]->getVelocity()
+					<< "\n\tx_prev: " << rb[i]->getOldPosition() << ", x: " << rb[i]->getPosition()
+					<< "\n\tw: " << rb[i]->getAngularVelocity()
+					<< "\n\tq_prev: " << rb[i]->getOldRotation() << ", q: " << rb[i]->getRotation());
 			}
 
 			// Update velocities	
@@ -202,9 +213,26 @@ void ExtendedTimeStepController::step(SimulationModel& model)
 		// SolveVelocities
 		velocityConstraintProjection(model);
 		STOP_TIMING_AVG;
+
+
+		// Update Inertia Matrices for all bodies (we do this once per substep only)
+		// We only need this at the beginning `semiImplicitEulerRotation` and use rest state when solving constraits
+#pragma omp for schedule(static) nowait
+		for (int i = 0; i < numBodies; i++)
+		{
+			rb[i]->rotationUpdated();
+		}
 	}
 
+#pragma omp parallel if(numBodies > MIN_PARALLEL_SIZE) default(shared)
+#pragma omp for schedule(static) nowait
 	// Update Geometry?
+	for (int i = 0; i < numBodies; i++)
+	{
+		// update geometry
+		if (rb[i]->getMass() != 0.0)
+			rb[i]->getGeometry().updateMeshTransformation(rb[i]->getPosition(), rb[i]->getRotationMatrix());
+	}
 
 	//////////////////////////////////////////////////////////////////////////
 	// update motor joint targets
@@ -247,7 +275,7 @@ void ExtendedTimeStepController::step(SimulationModel& model)
 	}
 
 	// compute new time	
-	tm->setTime(tm->getTime() + h);
+	tm->setTime(tm->getTime() + timestep);
 	STOP_TIMING_AVG;
 }
 
@@ -301,7 +329,7 @@ void ExtendedTimeStepController::positionConstraintProjection(SimulationModel& m
 
 		for (unsigned int i = 0; i < particleTetContacts.size(); i++)
 		{
-			particleTetContacts[i].extendedPBDRigidBodyUpdate(model, m_iterations);
+			particleTetContacts[i].extendedPBDRigidBodyUpdate(model, dt);
 		}
 
 	//	m_iterations++;

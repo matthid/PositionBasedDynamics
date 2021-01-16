@@ -1,5 +1,6 @@
 #ifndef COMMON_H
 #define COMMON_H
+#define _DEBUG_CALCULATIONS
 
 #include <Eigen/Dense>
 #include <float.h>
@@ -63,4 +64,14 @@ using Quaternionr = Eigen::Quaternion<Real, Eigen::DontAlign>;
 #define FORCE_INLINE __attribute__((always_inline))
 #endif
 
+#ifdef _DEBUG_CALCULATIONS
 
+#include "Utils/Logger.h"
+
+#define LOG_CALC(...) __VA_ARGS__
+
+#else
+
+#define LOG_CALC(...)
+
+#endif

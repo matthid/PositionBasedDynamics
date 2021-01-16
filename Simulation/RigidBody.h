@@ -14,6 +14,13 @@ namespace PBD
 	class RigidBody
 	{
 		private:
+			FORCE_INLINE static Real calcInv(Real d) {
+				if (d == static_cast<Real>(0.0)) {
+					return static_cast<Real>(0.0);
+				}
+				return static_cast<Real>(1.0) / d;
+			}
+
 			/** mass */
 			Real m_mass;
 			/** inverse mass */
@@ -72,9 +79,20 @@ namespace PBD
 			Vector3r m_transformation_v1;
 			Vector3r m_transformation_v2;
 			Vector3r m_transformation_R_X_v1;
-			
+
+#ifdef _DEBUG_CALCULATIONS
+			std::string m_name;
+#endif
+
 		public:
-			RigidBody(void) 
+			RigidBody(const std::string& name)
+#ifdef _DEBUG_CALCULATIONS
+				: m_name(name)
+#endif
+			{
+			}
+
+			RigidBody(void)
 			{
 			}
 
@@ -266,6 +284,13 @@ namespace PBD
 				return m_mass;
 			}
 
+#ifdef _DEBUG_CALCULATIONS
+			FORCE_INLINE const std::string& getName() const
+			{
+				return m_name;
+			}
+#endif
+
 			FORCE_INLINE const Real &getMass() const
 			{
 				return m_mass;
@@ -274,10 +299,7 @@ namespace PBD
 			FORCE_INLINE void setMass(const Real &value)
 			{
 				m_mass = value;
-				if (m_mass != 0.0)
-					m_invMass = static_cast<Real>(1.0) / m_mass;
-				else
-					m_invMass = 0.0;
+				m_invMass = calcInv(value);
 			}
 
 			FORCE_INLINE const Real &getInvMass() const
@@ -413,7 +435,8 @@ namespace PBD
 			FORCE_INLINE void setInertiaTensor(const Vector3r &value)
 			{
 				m_inertiaTensor = value;
-				m_inertiaTensorInverse = Vector3r(static_cast<Real>(1.0) / value[0], static_cast<Real>(1.0) / value[1], static_cast<Real>(1.0) / value[2]);
+
+				m_inertiaTensorInverse = Vector3r(calcInv(value[0]), calcInv(value[1]), calcInv(value[2]));
 			}
 
 			FORCE_INLINE const Vector3r &getInertiaTensorInverse() const

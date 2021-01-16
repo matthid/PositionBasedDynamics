@@ -1,3 +1,4 @@
+
 #include "Common/Common.h"
 #include "Demos/Visualization/MiniGL.h"
 #include "Demos/Visualization/Selection.h"
@@ -24,6 +25,7 @@
 	#define new DEBUG_NEW 
 #endif
 
+
 using namespace PBD;
 using namespace Eigen;
 using namespace std;
@@ -49,7 +51,7 @@ int main( int argc, char **argv )
 	REPORT_MEMORY_LEAKS
 
 	base = new DemoBase();
-	base->init(argc, argv, "Rigid body demo");
+	base->init(argc, argv, "Simple Rigid body demo");
 
 	SimulationModel *model = new SimulationModel();
 	model->init();
@@ -123,20 +125,20 @@ void timeStep()
 		// set target angle of motors for an animation
 		const Real currentTargetAngle = static_cast<Real>(M_PI * 0.5) - static_cast<Real>(M_PI * 0.5) * cos(static_cast<Real>(0.25)*TimeManager::getCurrent()->getTime());
 		SimulationModel::ConstraintVector &constraints = model->getConstraints();
-		TargetAngleMotorHingeJoint &joint1 = (*(TargetAngleMotorHingeJoint*)constraints[8]);
-		TargetVelocityMotorHingeJoint &joint2 = (*(TargetVelocityMotorHingeJoint*)constraints[9]);
-		joint1.setTarget(currentTargetAngle);
-		joint2.setTarget(3.5);
+		//TargetAngleMotorHingeJoint &joint1 = (*(TargetAngleMotorHingeJoint*)constraints[8]);
+		//TargetVelocityMotorHingeJoint &joint2 = (*(TargetVelocityMotorHingeJoint*)constraints[9]);
+		//joint1.setTarget(currentTargetAngle);
+		//joint2.setTarget(3.5);
 
-		const Real currentTargetPos = static_cast<Real>(1.5)*sin(static_cast<Real>(2.0)*TimeManager::getCurrent()->getTime());
-		TargetPositionMotorSliderJoint &joint3 = (*(TargetPositionMotorSliderJoint*)constraints[12]);
-		joint3.setTarget(currentTargetPos);
+		//const Real currentTargetPos = static_cast<Real>(1.5)*sin(static_cast<Real>(2.0)*TimeManager::getCurrent()->getTime());
+		//TargetPositionMotorSliderJoint &joint3 = (*(TargetPositionMotorSliderJoint*)constraints[12]);
+		//joint3.setTarget(currentTargetPos);
 
-		Real currentTargetVel = 0.25;
-		if (((int)(0.25*TimeManager::getCurrent()->getTime())) % 2 == 1)
-			currentTargetVel = -currentTargetVel;
-		TargetVelocityMotorSliderJoint &joint4 = (*(TargetVelocityMotorSliderJoint*)constraints[14]);
-		joint4.setTarget(currentTargetVel);
+		//Real currentTargetVel = 0.25;
+		//if (((int)(0.25*TimeManager::getCurrent()->getTime())) % 2 == 1)
+		//	currentTargetVel = -currentTargetVel;
+		//TargetVelocityMotorSliderJoint &joint4 = (*(TargetVelocityMotorSliderJoint*)constraints[14]);
+		//joint4.setTarget(currentTargetVel);
 	}
 }
 
@@ -152,18 +154,18 @@ void render ()
 	base->render();
 
 	float textColor[4] = { 0.0, .2f, .4f, 1 };
-	MiniGL::drawStrokeText(-0.5, 1.5, 1.0, 0.002f, "ball joint", 11, textColor);
-	MiniGL::drawStrokeText(3.0, 1.5, 1.0, 0.002f, "ball-on-line joint", 19, textColor);
-	MiniGL::drawStrokeText(7.3f, 1.5, 1.0, 0.002f, "hinge joint", 12, textColor);
-	MiniGL::drawStrokeText(11.2f, 1.5, 1.0, 0.002f, "universal joint", 15, textColor);
-
-	MiniGL::drawStrokeText(-1.0, -4.0, 1.0, 0.002f, "motor hinge joint", 17, textColor);
-	MiniGL::drawStrokeText(3.4f, -4.0, 1.0, 0.002f, "slider joint", 12, textColor);
-	MiniGL::drawStrokeText(6.6f, -4.0, 1.0, 0.002f, "target position motor", 21, textColor);
-	MiniGL::drawStrokeText(10.6f, -4.0, 1.0, 0.002f, "target velocity motor", 21, textColor);
-
-	MiniGL::drawStrokeText(-0.25, -9.5, 1.0, 0.002f, "spring", 6, textColor);
-	MiniGL::drawStrokeText(3.3, -9.5, 1.0, 0.002f, "distance joint", 14, textColor);
+	MiniGL::drawStrokeText(-0.5, 1.5, 1.0, 0.002f, "test joint", 11, textColor);
+	//MiniGL::drawStrokeText(3.0, 1.5, 1.0, 0.002f, "ball-on-line joint", 19, textColor);
+	//MiniGL::drawStrokeText(7.3f, 1.5, 1.0, 0.002f, "hinge joint", 12, textColor);
+	//MiniGL::drawStrokeText(11.2f, 1.5, 1.0, 0.002f, "universal joint", 15, textColor);
+	//
+	//MiniGL::drawStrokeText(-1.0, -4.0, 1.0, 0.002f, "motor hinge joint", 17, textColor);
+	//MiniGL::drawStrokeText(3.4f, -4.0, 1.0, 0.002f, "slider joint", 12, textColor);
+	//MiniGL::drawStrokeText(6.6f, -4.0, 1.0, 0.002f, "target position motor", 21, textColor);
+	//MiniGL::drawStrokeText(10.6f, -4.0, 1.0, 0.002f, "target velocity motor", 21, textColor);
+	//
+	//MiniGL::drawStrokeText(-0.25, -9.5, 1.0, 0.002f, "spring", 6, textColor);
+	//MiniGL::drawStrokeText(3.3, -9.5, 1.0, 0.002f, "distance joint", 14, textColor);
 
 	MiniGL::drawTime( TimeManager::getCurrent ()->getTime ());
 }
@@ -242,89 +244,57 @@ void createBodyModel()
 	loadObj(fileName, vdStatic, meshStatic, Vector3r(0.5, 0.5, 0.5));
 
 	// static body
-	const unsigned int numberOfBodies = 30;
+	const unsigned int numberOfBodies = 3;
 	rb.resize(numberOfBodies);
 	Real startX = 0.0;
 	Real startY = 6.5;
-	for (unsigned int i = 0; i < 10; i++)
-	{
-		if (i % 4 == 0)
-		{
-			startY -= 5.5;
-			startX = 0.0;
-		}
+	int i = 0;
 
-		rb[3*i] = new RigidBody();
-		rb[3*i]->initBody(0.0,
-			Vector3r(startX, startY, 1.0),
-			computeInertiaTensorBox(0.0, 0.5, 0.5, 0.5),
-			Quaternionr(1.0, 0.0, 0.0, 0.0),
-			vdStatic, meshStatic);
+	rb[3 * i] = new RigidBody("Static Cube");
+	rb[3 * i]->initBody(0.0,
+		Vector3r(startX, startY, 1.0),
+		computeInertiaTensorBox(0.0, 0.5, 0.5, 0.5),
+		Quaternionr(1.0, 0.0, 0.0, 0.0),
+		vdStatic, meshStatic);
 
-		// dynamic body
-		rb[3*i+1] = new RigidBody();
-		rb[3*i+1]->initBody(1.0,
-			Vector3r(startX, startY- static_cast<Real>(0.25), static_cast<Real>(2.0)),
-			computeInertiaTensorBox(1.0, width, height, depth),
-			Quaternionr(1.0, 0.0, 0.0, 0.0),
-			vd, mesh);
+	// dynamic body
+	rb[3 * i + 1] = new RigidBody("HingeJointBody");
+	rb[3 * i + 1]->initBody(1.0,
+		Vector3r(startX, startY - static_cast<Real>(0.25), static_cast<Real>(2.0)),
+		computeInertiaTensorBox(1.0, width, height, depth),
+		Quaternionr(1.0, 0.0, 0.0, 0.0),
+		vd, mesh);
 
-		// dynamic body
-		rb[3 * i + 2] = new RigidBody();
-		rb[3 * i + 2]->initBody(1.0,
-			Vector3r(startX, startY - static_cast<Real>(0.25), static_cast<Real>(4.0)),
-			computeInertiaTensorBox(1.0, width, height, depth),
-			Quaternionr(1.0, 0.0, 0.0, 0.0),
-			vd, mesh);
-		
-		startX += 4.0;
-	}
+	// dynamic body
+	rb[3 * i + 2] = new RigidBody("BallJointBody");
+	rb[3 * i + 2]->initBody(1.0,
+		Vector3r(startX, startY - static_cast<Real>(0.25), static_cast<Real>(4.0)),
+		computeInertiaTensorBox(1.0, width, height, depth),
+		Quaternionr(1.0, 0.0, 0.0, 0.0),
+		vd, mesh);
+
 
 	Real jointY = 0.75;
-	model->addBallJoint(0, 1, Vector3r(0.25, jointY, 1.0));
-	model->addBallJoint(1, 2, Vector3r(0.25, jointY, 3.0));
+	//model->addBallJoint(0, 1, Vector3r(0.25, jointY, 1.0));
+	//model->addHingeJoint(0, 1, Vector3r(0.25, jointY, 1.0), Vector3r(1.0, 0.0, 0.0));
+	//model->addBallJoint(1, 2, Vector3r(0.25, jointY, 3.0));
 	
-	model->addBallOnLineJoint(3, 4, Vector3r(4.25, jointY, 1.0), Vector3r(1.0, 0.0, 0.0));
-	model->addBallJoint(4, 5, Vector3r(4.25, jointY, 3.0));
-	
-	model->addHingeJoint(6, 7, Vector3r(8.0, jointY, 1.0), Vector3r(1.0, 0.0, 0.0));
-	model->addBallJoint(7, 8, Vector3r(8.25, jointY, 3.0));
-	rb[10]->initBody(1.0,
-		Vector3r(13.0, jointY, static_cast<Real>(1.0)),
+	rb[1]->initBody(1.0,
+		Vector3r(2.0, jointY, static_cast<Real>(1.0)),
 		computeInertiaTensorBox(1.0, width, height, depth),
 		Quaternionr(AngleAxisr(M_PI_2, Vector3r(0.0, 1.0, 0.0))),
 		vd, mesh);
 
-	rb[11]->initBody(1.0,
-		Vector3r(15.0, jointY, 1.0),
+	rb[2]->initBody(1.0,
+		Vector3r(4.0, jointY, 1.0),
 		computeInertiaTensorBox(1.0, width, height, depth),
 		Quaternionr(AngleAxisr(M_PI_2, Vector3r(0.0, 1.0, 0.0))),
 		vd, mesh);
 
-	model->addHingeJoint(9, 10, Vector3r(12.0, jointY, 1.0), Vector3r(0.0, 0.0, 1.0));
-	model->addBallJoint(10, 11, Vector3r(14.0, jointY, 1.25));
+	model->addHingeJoint(0, 1, Vector3r(1.0, jointY, 1.0), Vector3r(0.0, 0.0, 1.0));
+	model->addBallJoint(1, 2, Vector3r(3.0, jointY, 1.25));
 	//model->addUniversalJoint(9, 10, Vector3r(12.0, jointY, 1.0), Vector3r(1.0, 0.0, 0.0), Vector3r(0.0, 1.0, 0.0));
 	//model->addBallJoint(10, 11, Vector3r(12.25, jointY, 3.0));
-
-	jointY -= 5.5;
-	model->addTargetAngleMotorHingeJoint(12, 13, Vector3r(0.0, jointY, 1.0), Vector3r(1.0, 0.0, 0.0));
-	model->addTargetVelocityMotorHingeJoint(13, 14, Vector3r(0.0, jointY, 3.0), Vector3r(0.0, 1.0, 0.0));
-  	
-	model->addSliderJoint(15, 16, Vector3r(1.0, 0.0, 0.0));
-	model->addBallJoint(16, 17, Vector3r(4.25, jointY, 3.0));
-	
-	model->addTargetPositionMotorSliderJoint(18, 19, Vector3r(1.0, 0.0, 0.0));
-	model->addBallJoint(19, 20, Vector3r(8.25, jointY, 3.0));
-	
-	model->addTargetVelocityMotorSliderJoint(21, 22, Vector3r(1.0, 0.0, 0.0));
-	model->addBallJoint(22, 23, Vector3r(12.25, jointY, 3.0));
-	
-	jointY -= 5.5;
-	model->addRigidBodySpring(24, 25, Vector3r(0.25, jointY, 1.0), Vector3r(0.25, jointY, 1.0), 50.0);
-	model->addBallJoint(25, 26, Vector3r(0.25, jointY, 3.0));
-	
-	model->addDistanceJoint(27, 28, Vector3r(4.25, jointY, 1.0), Vector3r(4.25, jointY, 2.0));
-	model->addBallJoint(28, 29, Vector3r(4.25, jointY, 3.0));
 }
 
 

@@ -567,7 +567,7 @@ bool PositionBasedRigidBodyDynamics::init_HingeJoint(
 	const Quaternionr &q1,
 	const Vector3r &position,
 	const Vector3r &direction,
-	Eigen::Matrix<Real, 4, 7, Eigen::DontAlign> &jointInfo
+	Eigen::Matrix<Real, 4, 8, Eigen::DontAlign> &jointInfo
 	)
 {
 	// jointInfo contains
@@ -576,7 +576,8 @@ bool PositionBasedRigidBodyDynamics::init_HingeJoint(
 	// 3:	connector in body 1 (local)
 	// 4:	connector in body 0 (global)
 	// 5:	connector in body 1 (global)
-	// 6:	hinge axis in body 0 (local) used for rendering 
+	// 6:	hinge axis in body 0 (local)
+	// 7:	hinge axis in body 1 (local)
 
 	// transform in local coordinates
 	const Matrix3r rot0T = q0.matrix().transpose();
@@ -591,6 +592,7 @@ bool PositionBasedRigidBodyDynamics::init_HingeJoint(
 	// connector in body 1 (global)
 	jointInfo.block<3, 1>(0, 5) = position;
 	jointInfo.block<3, 1>(0, 6) = rot0T * direction;
+	jointInfo.block<3, 1>(0, 7) = rot1T * direction;
 
 	// determine constraint coordinate system
 	// with direction as x-axis
@@ -627,7 +629,7 @@ bool PositionBasedRigidBodyDynamics::update_HingeJoint(
 	const Quaternionr &q0,
 	const Vector3r &x1,
 	const Quaternionr &q1,
-	Eigen::Matrix<Real, 4, 7, Eigen::DontAlign> &jointInfo
+	Eigen::Matrix<Real, 4, 8, Eigen::DontAlign> &jointInfo
 	)
 {
 	// jointInfo contains
@@ -636,7 +638,8 @@ bool PositionBasedRigidBodyDynamics::update_HingeJoint(
 	// 3:	connector in body 1 (local)
 	// 4:	connector in body 0 (global)
 	// 5:	connector in body 1 (global)
-	// 6:	hinge axis in body 0 (local) used for rendering 
+	// 6:	hinge axis in body 0 (local)
+	// 7:	hinge axis in body 1 (local)
 
 	// compute world space positions of connectors
 	const Matrix3r rot0 = q0.matrix();
@@ -657,7 +660,7 @@ bool PositionBasedRigidBodyDynamics::solve_HingeJoint(
 	const Vector3r &x1,
 	const Matrix3r &inertiaInverseW1,
 	const Quaternionr &q1,
-	const Eigen::Matrix<Real, 4, 7, Eigen::DontAlign> &jointInfo,
+	const Eigen::Matrix<Real, 4, 8, Eigen::DontAlign> &jointInfo,
 	Vector3r &corr_x0, Quaternionr &corr_q0,
 	Vector3r &corr_x1, Quaternionr &corr_q1)
 {
@@ -667,7 +670,8 @@ bool PositionBasedRigidBodyDynamics::solve_HingeJoint(
 	// 3:	connector in body 1 (local)
 	// 4:	connector in body 0 (global)
 	// 5:	connector in body 1 (global)
-	// 6:	hinge axis in body 0 (local) used for rendering 
+	// 6:	hinge axis in body 0 (local)
+	// 7:	hinge axis in body 1 (local)
 
 
 	// compute constraint value
@@ -1807,7 +1811,7 @@ bool PositionBasedRigidBodyDynamics::solve_TargetVelocityMotorHingeJoint(
 	Vector3r &corr_x0, Quaternionr &corr_q0,
 	Vector3r &corr_x1, Quaternionr &corr_q1)
 {
-	Eigen::Matrix<Real, 4, 7> hingeJointInfo = jointInfo.block<4, 7>(0, 0);
+	Eigen::Matrix<Real, 4, 8> hingeJointInfo = jointInfo.block<4, 8>(0, 0);
 	const bool res = solve_HingeJoint(	invMass0, x0, inertiaInverseW0, q0, 
 												invMass1, x1, inertiaInverseW1, q1, 
 												hingeJointInfo, corr_x0, corr_q0, corr_x1, corr_q1);
